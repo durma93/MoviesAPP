@@ -5,7 +5,10 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -29,7 +32,7 @@ import com.example.durma.moviesapp.model.MoviesResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener{
 
     private RecyclerView recyclerView;
     private MoviesAdapter adapter;
@@ -78,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
             recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
         }
 
-        loadJSON();
+        checkSortOrder();
     }
 
     private void loadJSON() {
@@ -120,6 +123,45 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void loadJSON1() {
+
+        try{
+            if (BuildConfig.THE_MOVIE_DB_API_TOKEN.isEmpty()){
+                Toast.makeText(getApplicationContext(),"Nije ubacen API kljuc", Toast.LENGTH_LONG).show();
+                pd.dismiss();
+                return;
+            }
+
+            Client client = new Client();
+            Service apiService = Client.getClient().create(Service.class);
+
+            Call<MoviesResponse> call = apiService.getTopRatedMovie(BuildConfig.THE_MOVIE_DB_API_TOKEN);
+            call.enqueue(new Callback<MoviesResponse>() {
+                @Override
+                public void onResponse(Call<MoviesResponse> call, Response<MoviesResponse> response) {
+                    List<Movie> movies = response.body().getMovies();
+                    recyclerView.setAdapter(new MoviesAdapter(movies, getApplicationContext()));
+                    recyclerView.smoothScrollToPosition(0);
+                    if (swipeContainer.isRefreshing()){
+                        swipeContainer.setRefreshing(false);
+                    }
+                    pd.dismiss();
+
+                }
+
+                @Override
+                public void onFailure(Call<MoviesResponse> call, Throwable t) {
+                    Log.d("Error", "onFailure je pozvan iz enquea" );
+                    Toast.makeText(MainActivity.this, "onFailure je pozvan iz enquea", Toast.LENGTH_LONG).show();
+                }
+            });
+        }catch (Exception e){
+            Log.d("Error", "Greska u try bloku");
+            Toast.makeText(this, "Greska u try bloku", Toast.LENGTH_LONG).show();
+        }
+
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -131,6 +173,8 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.menu_settings:
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -151,4 +195,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        Log.d(TAG, "Preferences updated");
+        checkSortOrder();
+    }
+
+    private void checkSortOrder() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String sortOreder= preferences.getString(
+                this.getString(R.string.pref_sort_order_key),
+                this.getString(R.string.pref_most_popular)
+        );
+
+        if (sortOreder.equals(this.getString(R.string.pref_most_popular))){
+            Log.d(TAG, "Sorting najpopularniji");
+            loadJSON();
+        }else {
+            Log.d(TAG, "Sorting vote average");
+
+            loadJSON1();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (movieList.isEmpty()){
+            checkSortOrder();
+        }else {
+
+        }
+    }
 }
