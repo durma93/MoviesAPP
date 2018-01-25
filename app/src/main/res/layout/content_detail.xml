@@ -9,26 +9,23 @@
     tools:context=".DetailActivity"
     tools:showIn="@layout/activity_detail">
 
+    <LinearLayout
+        android:id="@+id/ad"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+
+
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        tools:showIn="@layout/activity_detail">
 
-        <LinearLayout
+        <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_height="wrap_content">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/movie_title"
-                android:layout_marginLeft="@dimen/layout_margin_left"
-                android:text="@string/name_movie"
-                android:textAlignment="center"
-                android:layout_marginTop="10dp"
-                android:textStyle="bold"
-                android:textSize="25sp"
-                />
+
 
             <TextView
                 android:layout_width="match_parent"
@@ -37,40 +34,13 @@
                 android:layout_marginLeft="@dimen/layout_margin_left"
                 android:padding="@dimen/padding_layout"
                 android:layout_marginTop="@dimen/layout_margin_top"
-                android:textSize="20sp" />
+                android:textSize="20sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginStart="16dp"
+                tools:layout_constraintTop_creator="1"
+                tools:layout_constraintLeft_creator="1"/>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/plot"
-                android:layout_marginLeft="@dimen/layout_margin_left"
-                android:text="@string/plot"
-                android:textAlignment="center"
-                android:layout_marginTop="@dimen/layout_margin_top2"
-                android:textStyle="bold"
-                android:textSize="25sp"
-                />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/plot_synopsis"
-                android:layout_marginLeft="@dimen/layout_margin_left"
-                android:padding="@dimen/padding_layout"
-                android:layout_marginTop="@dimen/layout_margin_top"
-                android:textSize="20sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/rating"
-                android:layout_marginLeft="@dimen/layout_margin_left"
-                android:text="@string/rating"
-                android:textAlignment="center"
-                android:layout_marginTop="@dimen/layout_margin_top2"
-                android:textStyle="bold"
-                android:textSize="25sp"
-                />
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -78,18 +48,11 @@
                 android:layout_marginLeft="@dimen/layout_margin_left"
                 android:padding="@dimen/padding_layout"
                 android:layout_marginTop="@dimen/layout_margin_top"
-                android:textSize="20sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/realise"
-                android:layout_marginLeft="@dimen/layout_margin_left"
-                android:text="@string/release"
-                android:textAlignment="center"
-                android:layout_marginTop="@dimen/layout_margin_top2"
-                android:textStyle="bold"
-                android:textSize="25sp"
+                android:textSize="20sp"
+                app:layout_constraintTop_toBottomOf="@+id/title"
+                android:layout_marginStart="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                tools:layout_constraintLeft_creator="1"
                 />
 
             <TextView
@@ -99,11 +62,51 @@
                 android:layout_marginLeft="@dimen/layout_margin_left"
                 android:padding="@dimen/padding_layout"
                 android:layout_marginTop="@dimen/layout_margin_top"
-                android:textSize="20sp" />
-        </LinearLayout>
+                android:textSize="20sp"
+                app:layout_constraintTop_toBottomOf="@+id/user_rating"
+                app:layout_constraintLeft_toLeftOf="parent"
+                />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/plot_synopsis"
+                android:layout_marginLeft="@dimen/layout_margin_left"
+                android:padding="@dimen/padding_layout"
+                android:layout_marginTop="@dimen/layout_margin_top"
+                android:textSize="20sp"
+                app:layout_constraintTop_toBottomOf="@+id/realise_date"
+                app:layout_constraintLeft_toLeftOf="parent"/>
+
+            <TextView
+                android:id="@+id/thumbnailURL"
+                android:visibility="invisible"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/trailer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="30sp"
+                android:text="@string/trailer"
+                app:layout_constraintTop_toBottomOf="@+id/plot_synopsis"
+                app:layout_constraintLeft_toLeftOf="parent"/>
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recycler_view1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:scrollbars="vertical"
+                app:layout_constraintTop_toBottomOf="@id/trailer"
+                app:layout_constraintLeft_toLeftOf="parent"
+                />
+
+        </android.support.constraint.ConstraintLayout>
 
 
 
     </ScrollView>
-
+    </LinearLayout>
 </RelativeLayout>

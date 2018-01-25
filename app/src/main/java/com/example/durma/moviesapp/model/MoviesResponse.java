@@ -29,7 +29,7 @@ public class MoviesResponse {
     /**
      * @param movies
      * @param totalResults
-     * @param page
+     * @parammoviesAdaptera page
      * @param totalPages
      */
     public MoviesResponse(Integer page, Integer totalResults, Integer totalPages, List<Movie> movies) {

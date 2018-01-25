@@ -5,13 +5,28 @@ import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.support.v7.widget.Toolbar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.example.durma.moviesapp.adapter.TrailerAdapter;
+import com.example.durma.moviesapp.api.Client;
+import com.example.durma.moviesapp.api.Service;
 import com.example.durma.moviesapp.model.Movie;
+import com.example.durma.moviesapp.model.Trailer;
+import com.example.durma.moviesapp.model.TrailerResponse;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by durma on 22.1.18..
@@ -20,6 +35,11 @@ import com.example.durma.moviesapp.model.Movie;
 public class DetailActivity extends AppCompatActivity {
     TextView nameOfMovie, plotSynopsis, userRating, releaseDate;
     ImageView imageView;
+
+    private RecyclerView recyclerView;
+    private TrailerAdapter trailerAdapter;
+    private List<Trailer> trailerList;
+
 
     Movie movie;
     String thumbnail, movieName, synopsis, rating, dateOfRelease;
@@ -36,6 +56,8 @@ public class DetailActivity extends AppCompatActivity {
 
 
         initColapsingToolbar();
+
+        initViews();
 
 
         imageView = (ImageView)findViewById(R.id.thumbnail_image_header);
@@ -104,6 +126,60 @@ public class DetailActivity extends AppCompatActivity {
                 }
             }
         });
+
+    }
+
+/*
+    pocetak implementacije za trailer
+*/
+    private void initViews(){
+
+        trailerList = new ArrayList<>();
+        trailerAdapter = new TrailerAdapter(this, trailerList);
+
+        recyclerView = (RecyclerView)findViewById(R.id.recycler_view1);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
+
+        recyclerView.setLayoutManager(mLayoutManager);
+        recyclerView.setAdapter(trailerAdapter);
+        trailerAdapter.notifyDataSetChanged();
+
+        loadJSON();
+
+
+    }
+
+    private void loadJSON() {
+        int movie_id = getIntent().getExtras().getInt("id");
+
+        try{
+            if (BuildConfig.THE_MOVIE_DB_API_TOKEN.isEmpty()){
+                Toast.makeText(getApplicationContext(), "Nema Api kljuca", Toast.LENGTH_LONG).show();
+
+            }
+            Client client = new Client();
+            Service apiService = Client.getClient().create(Service.class);
+
+                Call<TrailerResponse> call = apiService.getMovieTrailer(movie_id, BuildConfig.THE_MOVIE_DB_API_TOKEN);
+                call.enqueue(new Callback<TrailerResponse>() {
+                    @Override
+                    public void onResponse(Call<TrailerResponse> call, Response<TrailerResponse> response) {
+                        List<Trailer> trailers = response.body().getResults();
+                        recyclerView.setAdapter(new TrailerAdapter(getApplicationContext(), trailers));
+                        recyclerView.smoothScrollToPosition(0);
+                    }
+
+                    @Override
+                    public void onFailure(Call<TrailerResponse> call, Throwable t) {
+                        Log.d("Error", "onFailure: JSON TRAILER");
+                        Toast.makeText(DetailActivity.this, "Error onFailure: JSON TRAILER ", Toast.LENGTH_LONG).show();
+                    }
+                });
+
+        }catch (Exception e){
+                Log.d("Error", "Catch u JSonu ");
+                Toast.makeText(this, "Catch u JSonu ", Toast.LENGTH_LONG).show();
+        }
 
     }
 

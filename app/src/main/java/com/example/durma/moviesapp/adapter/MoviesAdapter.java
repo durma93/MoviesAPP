@@ -75,6 +75,7 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.ViewHolder
                      Movie clickedDataItem = movieList.get(pos);
                      Intent intent = new Intent(context, DetailActivity.class);
                      intent.putExtra("movies", clickedDataItem );
+                     intent.putExtra("id", movieList.get(pos).getId());
                      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                      context.startActivity(intent);
 
