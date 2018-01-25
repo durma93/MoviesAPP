@@ -1,9 +1,12 @@
 package com.example.durma.moviesapp;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -20,6 +23,7 @@ import com.example.durma.moviesapp.api.Service;
 import com.example.durma.moviesapp.model.Movie;
 import com.example.durma.moviesapp.model.Trailer;
 import com.example.durma.moviesapp.model.TrailerResponse;
+import com.github.ivbaranov.mfb.MaterialFavoriteButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -123,6 +127,32 @@ public class DetailActivity extends AppCompatActivity {
                 }else if(isShow){
                     collapsingToolbarLayout.setTitle(" ");
                     isShow = false;
+                }
+            }
+        });
+
+        //za favoite movies
+
+        MaterialFavoriteButton materialFavoriteButton = (MaterialFavoriteButton) findViewById(R.id.favourite_button);
+
+        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
+        materialFavoriteButton.setOnFavoriteChangeListener(new MaterialFavoriteButton.OnFavoriteChangeListener() {
+            @Override
+            public void onFavoriteChanged(MaterialFavoriteButton buttonView, boolean favorite) {
+                if (favorite){
+                    SharedPreferences.Editor editor = getSharedPreferences("com.example.durma.moviesapp.DetailActivity", MODE_PRIVATE).edit();
+                    editor.putBoolean("Favourite added",true);
+                    editor.commit();
+                    //saveFavorite();
+
+                    Snackbar.make(buttonView, "Added to favorite", Snackbar.LENGTH_LONG).show();
+                }else {
+                    SharedPreferences.Editor editor = getSharedPreferences("com.example.durma.moviesapp.DetailActivity", MODE_PRIVATE).edit();
+                    editor.putBoolean("Favorite Removed",true);
+                    editor.commit();
+
+                    Snackbar.make(buttonView, "Removed from favorite", Snackbar.LENGTH_LONG).show();
                 }
             }
         });
