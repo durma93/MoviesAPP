@@ -1,9 +1,16 @@
 package com.example.durma.moviesapp.Data;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+
+import com.example.durma.moviesapp.model.Movie;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by durma on 25.1.18..
@@ -40,12 +47,85 @@ public class FavoriteDbHelper extends SQLiteOpenHelper {
                 FavoriteContract.FavoriteEntry.COLUMN_TITLE + " TEXT NOT NULL, " +
                 FavoriteContract.FavoriteEntry.COLUMN_USERRATING + " REAL NOT NULL, " +
                 FavoriteContract.FavoriteEntry.COLUMN_POSTER_PATH + " TEXT NOT NULL, " +
-                FavoriteContract.FavoriteEntry.COLUMN_PLOT_SYNOPSIS + "  TEXT NOT NULL); " ;
+                FavoriteContract.FavoriteEntry.COLUMN_PLOT_SYNOPSIS + "  TEXT NOT NULL" + "); ";
         sqLiteDatabase.execSQL(SQL_CREATE_FAVORITE_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
 
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + FavoriteContract.FavoriteEntry.TABLE_NAME);
+
+        onCreate(sqLiteDatabase);
+
     }
+
+    public void addFavorite(Movie movie){
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(FavoriteContract.FavoriteEntry.COLUMN_MOVIEID, movie.getId());
+        values.put(FavoriteContract.FavoriteEntry.COLUMN_TITLE, movie.getOriginalTitle());
+        values.put(FavoriteContract.FavoriteEntry.COLUMN_USERRATING, movie.getVoteAverage());
+        values.put(FavoriteContract.FavoriteEntry.COLUMN_POSTER_PATH, movie.getPosterPath());
+        values.put(FavoriteContract.FavoriteEntry.COLUMN_PLOT_SYNOPSIS, movie.getOverview());
+
+        db.insert(FavoriteContract.FavoriteEntry.TABLE_NAME, null, values);
+
+        db.close();
+
+    }
+
+    public void deleteFavorite(int id){
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        db.delete(FavoriteContract.FavoriteEntry.TABLE_NAME, FavoriteContract.FavoriteEntry.COLUMN_MOVIEID + "=" + id, null);
+
+    }
+
+    public List<Movie> getAllFavorite(){
+
+/*        String[] columns = {
+                FavoriteContract.FavoriteEntry._ID,
+                FavoriteContract.FavoriteEntry.COLUMN_MOVIEID,
+                FavoriteContract.FavoriteEntry.COLUMN_TITLE,
+                FavoriteContract.FavoriteEntry.COLUMN_USERRATING,
+                FavoriteContract.FavoriteEntry.COLUMN_POSTER_PATH,
+                FavoriteContract.FavoriteEntry.COLUMN_PLOT_SYNOPSIS
+        };*///proveriti da l' treba
+
+
+        String sortOrder = FavoriteContract.FavoriteEntry._ID + " ASC";
+
+        List<Movie> list = new ArrayList<>();
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor c = db.query(FavoriteContract.FavoriteEntry.TABLE_NAME, null, null, null, null, null, sortOrder);
+
+        if (c.moveToFirst()){
+            do {
+                Movie movie = new Movie();
+
+                movie.setId(Integer.parseInt(c.getString(c.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_MOVIEID))));
+                movie.setOriginalTitle(c.getString(c.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_TITLE)));
+                movie.setVoteAverage(Double.parseDouble(c.getString(c.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_USERRATING))));
+                movie.setPosterPath(c.getString(c.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_POSTER_PATH)));
+                movie.setOverview(c.getString(c.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_PLOT_SYNOPSIS)));
+
+                list.add(movie);
+
+            }while (c.moveToNext());
+
+
+        }
+
+        c.close();
+        db.close();
+
+        return list;
+    }
+
 }

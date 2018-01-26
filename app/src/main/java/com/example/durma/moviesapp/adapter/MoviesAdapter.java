@@ -76,6 +76,8 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.ViewHolder
                      Intent intent = new Intent(context, DetailActivity.class);
                      intent.putExtra("movies", clickedDataItem );
                      intent.putExtra("id", movieList.get(pos).getId());
+                     intent.putExtra("poster_path", movieList.get(pos).getPosterPath());
+                     intent.putExtra("vote_average", movieList.get(pos).getVoteAverage());
                      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                      context.startActivity(intent);
 

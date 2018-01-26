@@ -8,10 +8,12 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -23,6 +25,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import com.example.durma.moviesapp.Data.FavoriteDbHelper;
 import com.example.durma.moviesapp.adapter.MoviesAdapter;
 import com.example.durma.moviesapp.api.Client;
 import com.example.durma.moviesapp.api.Service;
@@ -30,6 +33,8 @@ import com.example.durma.moviesapp.model.Movie;
 import com.example.durma.moviesapp.model.MoviesResponse;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener{
@@ -41,13 +46,36 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     private SwipeRefreshLayout swipeContainer;
     public static final String TAG = "MOVIE APP";
 
-    @SuppressLint("ResourceAsColor")
+    private FavoriteDbHelper favoriteDbHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         initViews();
+
+
+    }
+    @SuppressLint("ResourceAsColor")
+    private void initViews(){
+
+
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+        movieList = new ArrayList<>();
+        adapter = new MoviesAdapter(movieList, this);
+        adapter.notifyDataSetChanged();
+
+        favoriteDbHelper = new FavoriteDbHelper(MainActivity.this);
+
+
+        //upotrebljen getApplicationContext() umesto getActivity() metode
+        if (getApplicationContext().getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
+            recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        }else {
+            recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
+        }
 
         swipeContainer = (SwipeRefreshLayout) findViewById(R.id.main_content);
         swipeContainer.setColorSchemeColors(android.R.color.holo_orange_dark);
@@ -58,28 +86,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 Toast.makeText(MainActivity.this,"Movies Refreshed",Toast.LENGTH_LONG).show();
             }
         });
-    }
-
-    private void initViews(){
-
-        pd = new ProgressDialog(this);
-        pd.setMessage("Fetching movies...");
-        pd.setCancelable(false);
-        pd.show();
-
-        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-
-        movieList = new ArrayList<>();
-        adapter = new MoviesAdapter(movieList, this);
-        adapter.notifyDataSetChanged();
-
-
-        //upotrebljen getApplicationContext() umesto getActivity() metode
-        if (getApplicationContext().getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
-            recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        }else {
-            recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
-        }
 
         checkSortOrder();
     }
@@ -101,12 +107,16 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 @Override
                 public void onResponse(Call<MoviesResponse> call, Response<MoviesResponse> response) {
                     List<Movie> movies = response.body().getMovies();
+
+                    //Colection za sort
+                    Collections.sort(movies, Movie.BY_NAME_ALPHABETICAL);
+
                     recyclerView.setAdapter(new MoviesAdapter(movies, getApplicationContext()));
                     recyclerView.smoothScrollToPosition(0);
                     if (swipeContainer.isRefreshing()){
                         swipeContainer.setRefreshing(false);
                     }
-                    pd.dismiss();
+                    //pd.dismiss();
 
                 }
 
@@ -140,12 +150,16 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 @Override
                 public void onResponse(Call<MoviesResponse> call, Response<MoviesResponse> response) {
                     List<Movie> movies = response.body().getMovies();
+
+                    //Colection za sort
+                    Collections.sort(movies, Movie.BY_NAME_ALPHABETICAL);
+
                     recyclerView.setAdapter(new MoviesAdapter(movies, getApplicationContext()));
                     recyclerView.smoothScrollToPosition(0);
                     if (swipeContainer.isRefreshing()){
                         swipeContainer.setRefreshing(false);
                     }
-                    pd.dismiss();
+                    //pd.dismiss();
 
                 }
 
@@ -182,7 +196,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     }
 
-    //videcemo da l' radi bez ovoga
+    //videcemo da l' radi bez ovoga ----RADIIII
     public Activity getActivity(){
         Context context = this;
         while (context instanceof ContextWrapper){
@@ -208,14 +222,69 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 this.getString(R.string.pref_most_popular)
         );
 
-        if (sortOreder.equals(this.getString(R.string.pref_most_popular))){
+        if (sortOreder.equals(this.getString(R.string.pref_most_popular))) {
             Log.d(TAG, "Sorting najpopularniji");
             loadJSON();
+
+        }else if(sortOreder.equals(this.getString(R.string.favorite))){
+
+            Log.d(TAG, "Sorting by favorite");
+            initViews2();
+
         }else {
             Log.d(TAG, "Sorting vote average");
 
             loadJSON1();
         }
+    }
+
+    //za favoirte
+    private void initViews2() {
+
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+        movieList = new ArrayList<>();
+
+        adapter = new MoviesAdapter(movieList, this);
+
+        if (getApplicationContext().getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
+            recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        }else {
+            recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
+        }
+
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
+
+        favoriteDbHelper = new FavoriteDbHelper(MainActivity.this);
+
+        getAllfavorite();
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private void getAllfavorite() {
+
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... voids) {
+                movieList.clear();
+                movieList.addAll(favoriteDbHelper.getAllFavorite());
+
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+
+                super.onPostExecute(aVoid);
+
+                adapter.notifyDataSetChanged();
+            }
+        }.execute();
+
+
+
     }
 
     @Override

@@ -9,6 +9,7 @@ import android.os.Parcelable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -64,6 +65,15 @@ public class Movie implements Serializable {
      */
     public Movie() {
     }
+
+    //sortiranje po abecednom redu
+    public static final Comparator<Movie> BY_NAME_ALPHABETICAL = new Comparator<Movie>() {
+        @Override
+        public int compare(Movie movie, Movie t1) {
+
+            return movie.title.compareTo(t1.title);
+        }
+    };
 
     /**
      *

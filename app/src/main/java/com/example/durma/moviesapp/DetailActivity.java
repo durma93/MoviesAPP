@@ -17,6 +17,7 @@ import android.support.v7.widget.Toolbar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.example.durma.moviesapp.Data.FavoriteDbHelper;
 import com.example.durma.moviesapp.adapter.TrailerAdapter;
 import com.example.durma.moviesapp.api.Client;
 import com.example.durma.moviesapp.api.Service;
@@ -45,9 +46,17 @@ public class DetailActivity extends AppCompatActivity {
     private List<Trailer> trailerList;
 
 
+
+
     Movie movie;
     String thumbnail, movieName, synopsis, rating, dateOfRelease;
     int movie_id;
+
+    private FavoriteDbHelper favoriteDbHelper;
+    private Movie movie_favorite;
+    //private final AppCompatActivity activity = DetailActivity.this;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -144,10 +153,16 @@ public class DetailActivity extends AppCompatActivity {
                     SharedPreferences.Editor editor = getSharedPreferences("com.example.durma.moviesapp.DetailActivity", MODE_PRIVATE).edit();
                     editor.putBoolean("Favourite added",true);
                     editor.commit();
-                    //saveFavorite();
+                    saveFavorite();
 
                     Snackbar.make(buttonView, "Added to favorite", Snackbar.LENGTH_LONG).show();
                 }else {
+                    int movie_id = getIntent().getExtras().getInt("id");
+                    favoriteDbHelper = new FavoriteDbHelper(DetailActivity.this);
+                    favoriteDbHelper.deleteFavorite(movie_id);
+
+
+
                     SharedPreferences.Editor editor = getSharedPreferences("com.example.durma.moviesapp.DetailActivity", MODE_PRIVATE).edit();
                     editor.putBoolean("Favorite Removed",true);
                     editor.commit();
@@ -159,9 +174,11 @@ public class DetailActivity extends AppCompatActivity {
 
     }
 
-/*
-    pocetak implementacije za trailer
-*/
+
+
+    /*
+        pocetak implementacije za trailer
+    */
     private void initViews(){
 
         trailerList = new ArrayList<>();
@@ -213,5 +230,23 @@ public class DetailActivity extends AppCompatActivity {
 
     }
 
+
+    private void saveFavorite() {
+
+        favoriteDbHelper = new FavoriteDbHelper(DetailActivity.this);
+
+        movie_favorite = new Movie();
+
+        Double rate = movie.getVoteAverage();
+
+        movie_favorite.setId(movie_id);
+        movie_favorite.setOriginalTitle(movieName);
+        movie_favorite.setPosterPath(thumbnail);
+        movie_favorite.setVoteAverage(rate);
+        movie_favorite.setOverview(synopsis);
+
+        favoriteDbHelper.addFavorite(movie_favorite);
+
+    }
 
 }
