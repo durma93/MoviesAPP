@@ -11,6 +11,7 @@
         android:id="@+id/appbar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/detail_backdrop_height"
+        android:fitsSystemWindows="true"
         android:theme="?colorPrimary">
 
         <android.support.design.widget.CollapsingToolbarLayout
@@ -25,12 +26,12 @@
             app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
 
-                <ImageView
-                    android:id="@+id/thumbnail_image_header"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    app:layout_collapseMode="parallax" />
+            <ImageView
+                android:id="@+id/thumbnail_image_header"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                app:layout_collapseMode="parallax"/>
 
 
 
@@ -51,102 +52,79 @@
         </android.support.design.widget.CollapsingToolbarLayout>
 
     </android.support.design.widget.AppBarLayout>
-<android.support.v4.widget.NestedScrollView
-    android:layout_width="match_parent"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    android:layout_height="wrap_content">
-
-        <android.support.constraint.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
 
 
+    <android.support.v4.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        >
+        <RelativeLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/title"
-                android:layout_marginLeft="@dimen/layout_margin_left"
-                android:padding="@dimen/padding_layout"
-                android:layout_marginTop="@dimen/layout_margin_top"
-                android:textSize="20sp"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_marginStart="16dp"/>
+        <com.github.ivbaranov.mfb.MaterialFavoriteButton
+            android:id="@+id/favorite_button"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:padding="@dimen/padding_layout"
+            app:mfb_type="heart"
+            android:layout_marginLeft="@dimen/layout_margin_left"
+            android:layout_marginTop="@dimen/activity_vertical_margin" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/user_rating"
-                android:layout_marginLeft="@dimen/layout_margin_left"
-                android:padding="@dimen/padding_layout"
-                android:layout_marginTop="@dimen/layout_margin_top"
-                android:textSize="20sp"
-                app:layout_constraintTop_toBottomOf="@+id/title"
-                android:layout_marginStart="16dp"
-                app:layout_constraintLeft_toLeftOf="parent"
-                />
+        <TextView
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/userrating"
+            android:padding="@dimen/padding_layout"
+            android:layout_toRightOf="@+id/favorite_button"
+            android:layout_marginLeft="@dimen/layout_margin_left"
+            android:textSize="20sp"
+            />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/realise_date"
-                android:layout_marginLeft="@dimen/layout_margin_left"
-                android:padding="@dimen/padding_layout"
-                android:layout_marginTop="@dimen/layout_margin_top"
-                android:textSize="20sp"
-                app:layout_constraintTop_toBottomOf="@+id/user_rating"
-                app:layout_constraintLeft_toLeftOf="parent"
-                />
+        <TextView
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/releasedate"
+            android:layout_below="@+id/userrating"
+            android:layout_marginLeft="@dimen/layout_margin_left"
+            android:padding="@dimen/padding_layout"
+            android:textSize="20sp"
+            />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/plot_synopsis"
-                android:layout_marginLeft="@dimen/layout_margin_left"
-                android:padding="@dimen/padding_layout"
-                android:layout_marginTop="@dimen/layout_margin_top"
-                android:textSize="20sp"
-                app:layout_constraintTop_toBottomOf="@+id/realise_date"
-                app:layout_constraintLeft_toLeftOf="parent"/>
+        <TextView
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/plotsynopsis"
+            android:layout_below="@+id/releasedate"
+            android:padding="@dimen/padding_layout"
+            android:textSize="20sp"
+            />
 
-            <TextView
-                android:id="@+id/thumbnailURL"
-                android:visibility="invisible"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+        <TextView
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/thumbnailUrl"
+            android:visibility="invisible"/>
 
-            <TextView
-                android:id="@+id/trailer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="30sp"
-                android:text="@string/trailer"
-                app:layout_constraintTop_toBottomOf="@+id/plot_synopsis"
-                app:layout_constraintLeft_toLeftOf="parent"/>
+        <TextView
+            android:id="@+id/trailer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textSize="30sp"
+            android:text="@string/trailer"
+            />
 
-            <com.github.ivbaranov.mfb.MaterialFavoriteButton
-                android:id="@+id/favourite_button"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_alignParentRight="true"
-                app:layout_constraintRight_toLeftOf="@+id/user_rating"
-                app:layout_constraintTop_toBottomOf="@id/user_rating"
-                app:layout_constraintBottom_toTopOf="@+id/user_rating"
-                app:layout_constraintLeft_toRightOf="@+id/realise_date"
-                android:background="@color/colorPrimary"/>
 
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/recycler_view1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clipToPadding="false"
-                android:scrollbars="vertical"
-                app:layout_constraintTop_toBottomOf="@id/trailer"
-                app:layout_constraintLeft_toLeftOf="parent"
-                />
-
-        </android.support.constraint.ConstraintLayout>
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_view1"
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:scrollbars="vertical"
+            android:layout_below="@+id/plotsynopsis"/>
+    </RelativeLayout>
 
 
 </android.support.v4.widget.NestedScrollView>

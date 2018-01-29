@@ -28,9 +28,9 @@ public class Movie implements Serializable {
     @SerializedName("vote_average")
     @Expose
     private Double voteAverage;
-    @SerializedName("title")
+   /* @SerializedName("title")
     @Expose
-    private String title;
+    private String title;*/
     @SerializedName("popularity")
     @Expose
     private Double popularity;
@@ -67,11 +67,11 @@ public class Movie implements Serializable {
     }
 
     //sortiranje po abecednom redu
-    public static final Comparator<Movie> BY_NAME_ALPHABETICAL = new Comparator<Movie>() {
+   public static final Comparator<Movie> BY_NAME_ALPHABETICAL = new Comparator<Movie>() {
         @Override
         public int compare(Movie movie, Movie t1) {
 
-            return movie.title.compareTo(t1.title);
+            return movie.originalTitle.compareTo(t1.originalTitle);
         }
     };
 
@@ -79,11 +79,11 @@ public class Movie implements Serializable {
      *
      * @param genreIds
      * @param id
-     * @param title
+   //  * @param title
      * @param releaseDate
      * @param overview
      * @param posterPath
-     * @param originalTitle
+    * @param originalTitle
      * @param voteAverage
      * @param originalLanguage
      * @param adult
@@ -92,13 +92,15 @@ public class Movie implements Serializable {
      * @param video
      * @param popularity
      */
-    public Movie(Integer voteCount, Integer id, Boolean video, Double voteAverage, String title, Double popularity, String posterPath, String originalLanguage, String originalTitle, List<Integer> genreIds, String backdropPath, Boolean adult, String overview, String releaseDate) {
+    public Movie(Integer voteCount, Integer id, Boolean video, Double voteAverage,/* String title,*/ Double popularity, String posterPath, String originalLanguage, String originalTitle, List<Integer> genreIds, String backdropPath, Boolean adult, String overview, String releaseDate) {
         super();
         this.voteCount = voteCount;
         this.id = id;
         this.video = video;
         this.voteAverage = voteAverage;
+/*
         this.title = title;
+*/
         this.popularity = popularity;
         this.posterPath = posterPath;
         this.originalLanguage = originalLanguage;
@@ -142,13 +144,13 @@ public class Movie implements Serializable {
         this.voteAverage = voteAverage;
     }
 
-    public String getTitle() {
+/*    public String getTitle() {
         return title;
     }
 
     public void setTitle(String title) {
         this.title = title;
-    }
+    }*/
 
     public Double getPopularity() {
         return popularity;
@@ -158,10 +160,8 @@ public class Movie implements Serializable {
         this.popularity = popularity;
     }
 
-    public String baseImageURL = "https://image.tmdb.org/t/p/w500/";
-
     public String getPosterPath() {
-        return baseImageURL + posterPath;
+        return posterPath;
     }
 
     public void setPosterPath(String posterPath) {
@@ -183,6 +183,7 @@ public class Movie implements Serializable {
     public void setOriginalTitle(String originalTitle) {
         this.originalTitle = originalTitle;
     }
+
 
     public List<Integer> getGenreIds() {
         return genreIds;

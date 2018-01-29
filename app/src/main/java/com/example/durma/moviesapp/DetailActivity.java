@@ -2,6 +2,8 @@ package com.example.durma.moviesapp;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.AppBarLayout;
@@ -17,6 +19,7 @@ import android.support.v7.widget.Toolbar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.example.durma.moviesapp.Data.FavoriteContract;
 import com.example.durma.moviesapp.Data.FavoriteDbHelper;
 import com.example.durma.moviesapp.adapter.TrailerAdapter;
 import com.example.durma.moviesapp.api.Client;
@@ -53,8 +56,9 @@ public class DetailActivity extends AppCompatActivity {
     int movie_id;
 
     private FavoriteDbHelper favoriteDbHelper;
+    private SQLiteDatabase mdb;
     private Movie movie_favorite;
-    //private final AppCompatActivity activity = DetailActivity.this;
+    private final AppCompatActivity activity = DetailActivity.this;
 
 
     @Override
@@ -67,17 +71,18 @@ public class DetailActivity extends AppCompatActivity {
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        //Sredjivanje dugmeta za omiljene filmove da ostane u zadatom stanju
+        favoriteDbHelper = new FavoriteDbHelper(this);
+        mdb = favoriteDbHelper.getWritableDatabase();
 
-       // initColapsingToolbar();
 
-        initViews();
 
 
         imageView = (ImageView)findViewById(R.id.thumbnail_image_header);
-        nameOfMovie = (TextView) findViewById(R.id.title);
-        plotSynopsis = (TextView) findViewById(R.id.plot_synopsis);
-        userRating = (TextView) findViewById(R.id.user_rating);
-        releaseDate = (TextView) findViewById(R.id.realise_date);
+        //nameOfMovie = (TextView) findViewById(R.id.title);
+        plotSynopsis = (TextView) findViewById(R.id.plotsynopsis);
+        userRating = (TextView) findViewById(R.id.userrating);
+        releaseDate = (TextView) findViewById(R.id.releasedate);
 
         Intent intentThatStartedThisActivity = getIntent();
         if (intentThatStartedThisActivity.hasExtra("movies")){
@@ -90,14 +95,11 @@ public class DetailActivity extends AppCompatActivity {
             rating = Double.toString(movie.getVoteAverage());
             dateOfRelease = movie.getReleaseDate();
             movie_id = movie.getId();
-           /* thumbnail = getIntent().getExtras().getString("poster_path");
-            movieName = getIntent().getExtras().getString("original_title");
-            synopsis = getIntent().getExtras().getString("overview");
-            rating = getIntent().getExtras().getString("vote_average");
-            dateOfRelease = getIntent().getExtras().getString("release_date");*/
+
+           String poster = "https://image.tmdb.org/t/p/w500" + thumbnail;
 
             Glide.with(this)
-                    .load(thumbnail)
+                    .load(poster)
                     .placeholder(R.drawable.loading)
                     .into(imageView);
 
@@ -106,8 +108,9 @@ public class DetailActivity extends AppCompatActivity {
             userRating.setText(rating);
             releaseDate.setText(dateOfRelease);
 
+            ( (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar)).setTitle(movieName);
 
-            //Dodavanje da se gubi ime filma kad se skroluje
+/*            //Dodavanje da se gubi ime filma kad se skroluje
             AppBarLayout appBarLayout =(AppBarLayout) findViewById(R.id.appbar);
             appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
 
@@ -121,82 +124,71 @@ public class DetailActivity extends AppCompatActivity {
                         ((CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar)).setTitle("");
                     }
                 }
-            });
-
-
-
-
-
+            });*/
         }else{
             Toast.makeText(this, "Nema api podatka iz moviesAdaptera", Toast.LENGTH_LONG).show();
         }
-    }
 
+        //hendlovanje
 
-    //ne treba jer smo ubacili dinamic skrolovanje
-    private void initColapsingToolbar() {
+        MaterialFavoriteButton materialFavoriteButton = (MaterialFavoriteButton) findViewById(R.id.favorite_button);
 
-        final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-
-        collapsingToolbarLayout.setTitle(" ");
-
-        AppBarLayout appBarLayout = (AppBarLayout) findViewById(R.id.appbar);
-        appBarLayout.setExpanded(true);
-
-        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-            boolean isShow = false;
-            int scrollRange = -1;
-
-            @Override
-            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-                if (scrollRange == -1){
-                    scrollRange = appBarLayout.getTotalScrollRange();
+        if (Exist(movieName)){
+            materialFavoriteButton.setFavorite(true);
+            materialFavoriteButton.setOnFavoriteChangeListener(new MaterialFavoriteButton.OnFavoriteChangeListener() {
+                @Override
+                public void onFavoriteChanged(MaterialFavoriteButton buttonView, boolean favorite) {
+                    if(favorite == true){
+                        saveFavorite();
+                        Snackbar.make(buttonView, "Added to favorite", Snackbar.LENGTH_LONG).show();
+                    }else {
+                        favoriteDbHelper = new FavoriteDbHelper(DetailActivity.this);
+                        favoriteDbHelper.deleteFavorite(movie_id);
+                        Snackbar.make(buttonView, "Removed from favorite", Snackbar.LENGTH_LONG).show();
+                    }
                 }
-                if (scrollRange + verticalOffset ==0){
-                    collapsingToolbarLayout.setTitle(getString(R.string.movie_details));
-                    isShow = true;
-
-                }else if(isShow){
-                    collapsingToolbarLayout.setTitle(" ");
-                    isShow = false;
+            });
+        }else{
+            materialFavoriteButton.setOnFavoriteChangeListener(new MaterialFavoriteButton.OnFavoriteChangeListener() {
+                @Override
+                public void onFavoriteChanged(MaterialFavoriteButton buttonView, boolean favorite) {
+                    if(favorite == true){
+                        saveFavorite();
+                        Snackbar.make(buttonView, "Added to favorite", Snackbar.LENGTH_LONG).show();
+                    }else {
+                        int movie_id = getIntent().getExtras().getInt("id");
+                        favoriteDbHelper = new FavoriteDbHelper(DetailActivity.this);
+                        favoriteDbHelper.deleteFavorite(movie_id);
+                        Snackbar.make(buttonView, "Removed from favorite", Snackbar.LENGTH_LONG).show();
+                    }
                 }
-            }
-        });
+            });
+        }
 
-        //za favoite movies
-
-        MaterialFavoriteButton materialFavoriteButton = (MaterialFavoriteButton) findViewById(R.id.favourite_button);
-
-        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-
-        materialFavoriteButton.setOnFavoriteChangeListener(new MaterialFavoriteButton.OnFavoriteChangeListener() {
-            @Override
-            public void onFavoriteChanged(MaterialFavoriteButton buttonView, boolean favorite) {
-                if (favorite){
-                    SharedPreferences.Editor editor = getSharedPreferences("com.example.durma.moviesapp.DetailActivity", MODE_PRIVATE).edit();
-                    editor.putBoolean("Favourite added",true);
-                    editor.commit();
-                    saveFavorite();
-
-                    Snackbar.make(buttonView, "Added to favorite", Snackbar.LENGTH_LONG).show();
-                }else {
-                    int movie_id = getIntent().getExtras().getInt("id");
-                    favoriteDbHelper = new FavoriteDbHelper(DetailActivity.this);
-                    favoriteDbHelper.deleteFavorite(movie_id);
-
-
-
-                    SharedPreferences.Editor editor = getSharedPreferences("com.example.durma.moviesapp.DetailActivity", MODE_PRIVATE).edit();
-                    editor.putBoolean("Favorite Removed",true);
-                    editor.commit();
-
-                    Snackbar.make(buttonView, "Removed from favorite", Snackbar.LENGTH_LONG).show();
-                }
-            }
-        });
+        initViews();
 
     }
 
+    public boolean Exist(String searchItem) {
+
+        String[] projection = {
+                FavoriteContract.FavoriteEntry._ID,
+                FavoriteContract.FavoriteEntry.COLUMN_MOVIEID,
+                FavoriteContract.FavoriteEntry.COLUMN_TITLE,
+                FavoriteContract.FavoriteEntry.COLUMN_USERRATING,
+                FavoriteContract.FavoriteEntry.COLUMN_POSTER_PATH,
+                FavoriteContract.FavoriteEntry.COLUMN_PLOT_SYNOPSIS
+
+        };
+        String selection = FavoriteContract.FavoriteEntry.COLUMN_TITLE + " =?";
+        String[] selectionArgs = { searchItem };
+        String limit = "1";
+
+        Cursor cursor = mdb.query(FavoriteContract.FavoriteEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, null, limit);
+        boolean exists = (cursor.getCount() > 0);
+        cursor.close();
+        return exists;
+    }
 
 
     /*
@@ -220,7 +212,7 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     private void loadJSON() {
-        int movie_id = getIntent().getExtras().getInt("id");
+        //int movie_id = getIntent().getExtras().getInt("id");
 
         try{
             if (BuildConfig.THE_MOVIE_DB_API_TOKEN.isEmpty()){
@@ -255,8 +247,8 @@ public class DetailActivity extends AppCompatActivity {
 
 
     private void saveFavorite() {
+        favoriteDbHelper = new FavoriteDbHelper(activity);
 
-        favoriteDbHelper = new FavoriteDbHelper(DetailActivity.this);
 
         movie_favorite = new Movie();
 
