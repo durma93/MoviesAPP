@@ -40,8 +40,5 @@ dependencies {
     compile 'com.github.ivbaranov:materialfavoritebutton:0.1.4'
 
 
+    }
 
-
-
-
-}

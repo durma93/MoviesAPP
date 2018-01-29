@@ -17,6 +17,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -33,7 +34,6 @@ import com.example.durma.moviesapp.model.Movie;
 import com.example.durma.moviesapp.model.MoviesResponse;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,6 +55,12 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         initViews();
 
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+        //Testiranje sort abecednog
+/*        TestAdapter testAdapter = new TestAdapter(LayoutInflater.from(this));
+        recyclerView.setAdapter(testAdapter);
+        testAdapter.setMovieList(movieList);*/
 
     }
     @SuppressLint("ResourceAsColor")

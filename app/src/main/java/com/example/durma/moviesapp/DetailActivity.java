@@ -68,7 +68,7 @@ public class DetailActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 
-        initColapsingToolbar();
+       // initColapsingToolbar();
 
         initViews();
 
@@ -101,16 +101,39 @@ public class DetailActivity extends AppCompatActivity {
                     .placeholder(R.drawable.loading)
                     .into(imageView);
 
-            nameOfMovie.setText(movieName);
+           // nameOfMovie.setText(movieName);
             plotSynopsis.setText(synopsis);
             userRating.setText(rating);
             releaseDate.setText(dateOfRelease);
+
+
+            //Dodavanje da se gubi ime filma kad se skroluje
+            AppBarLayout appBarLayout =(AppBarLayout) findViewById(R.id.appbar);
+            appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+
+
+                @Override
+                public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                    if (Math.abs(verticalOffset)==appBarLayout.getTotalScrollRange() ){
+                        //Promene u dinamickom skrolovanju Detail aktivitija
+                        ((CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar)).setTitle(movieName);
+                    } else {
+                        ((CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar)).setTitle("");
+                    }
+                }
+            });
+
+
+
+
 
         }else{
             Toast.makeText(this, "Nema api podatka iz moviesAdaptera", Toast.LENGTH_LONG).show();
         }
     }
 
+
+    //ne treba jer smo ubacili dinamic skrolovanje
     private void initColapsingToolbar() {
 
         final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
