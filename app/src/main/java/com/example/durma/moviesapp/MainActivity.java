@@ -8,31 +8,43 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import okhttp3.Cache;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 import com.example.durma.moviesapp.Data.FavoriteDbHelper;
 import com.example.durma.moviesapp.adapter.MoviesAdapter;
+import com.example.durma.moviesapp.adapter.PaginationAdapter;
 import com.example.durma.moviesapp.api.Client;
 import com.example.durma.moviesapp.api.Service;
 import com.example.durma.moviesapp.model.Movie;
 import com.example.durma.moviesapp.model.MoviesResponse;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,6 +60,26 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     private FavoriteDbHelper favoriteDbHelper;
 
+    //dodavanje cache-a
+    int cacheSize = 10*1024*1024;
+
+    //dodavanje paginacije
+
+    PaginationAdapter paginationAdapter;
+    LinearLayoutManager linearLayoutManager;
+
+    RecyclerView rv;
+    ProgressBar progressBar;
+
+    private static final int PAGE_START = 1;
+    private boolean isLoading = false;
+    private boolean isLastPage = false;
+
+    private int TOTAL_PAGES = 5;
+    private int current_page = PAGE_START;
+
+    private Service movieService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,18 +87,60 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         initViews();
 
-        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
 
-        //Testiranje sort abecednog
-/*        TestAdapter testAdapter = new TestAdapter(LayoutInflater.from(this));
-        recyclerView.setAdapter(testAdapter);
-        testAdapter.setMovieList(movieList);*/
 
     }
     @SuppressLint("ResourceAsColor")
     private void initViews(){
 
+        rv = (RecyclerView) findViewById(R.id.recycler_view);
+        progressBar = (ProgressBar) findViewById(R.id.main_progress);
 
+        paginationAdapter = new PaginationAdapter(this);
+
+        linearLayoutManager = new GridLayoutManager(this, 2);
+
+        rv.setLayoutManager(linearLayoutManager);
+
+        rv.setItemAnimator(new DefaultItemAnimator());
+
+        rv.setAdapter(paginationAdapter);
+
+        rv.addOnScrollListener(new PaginationScrollListener((GridLayoutManager) linearLayoutManager) {
+            @Override
+            public boolean isLoading() {
+                return isLoading;
+            }
+
+            @Override
+            public int getTotalPageCount() {
+                return TOTAL_PAGES;
+            }
+
+            @Override
+            public boolean isLastPage() {
+                return isLastPage;
+            }
+
+            @Override
+            public void loadMoreItems() {
+                isLoading = true;
+                current_page +=1;
+
+                //mokovanje kasnjenje mreze za API poziv od jedne sekunde
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadMoreItems();
+                    }
+                }, 1000);
+            }
+        });
+
+        movieService = Client.getClient().create(Service.class);
+
+
+        /*
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
 
         movieList = new ArrayList<>();
@@ -92,8 +166,33 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 Toast.makeText(MainActivity.this,"Movies Refreshed",Toast.LENGTH_LONG).show();
             }
         });
+*/
 
         checkSortOrder();
+    }
+
+    private Call<MoviesResponse> callTopRatedMoviesApi(){
+
+        return movieService.getTopRatedMovie(BuildConfig.THE_MOVIE_DB_API_TOKEN,
+                current_page);
+
+    }
+
+    private Call<MoviesResponse> callPupularMoviesMoviesApi(){
+
+        return movieService.getPupularMovies(BuildConfig.THE_MOVIE_DB_API_TOKEN,
+                current_page);
+
+    }
+
+
+    private boolean checkConectionAvalable(){
+
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        return networkInfo != null && networkInfo.isConnected();
+
     }
 
     private void loadJSON() {
@@ -101,12 +200,47 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         try{
             if (BuildConfig.THE_MOVIE_DB_API_TOKEN.isEmpty()){
                 Toast.makeText(getApplicationContext(),"Nije ubacen API kljuc", Toast.LENGTH_LONG).show();
-                pd.dismiss();
                 return;
             }
 
+
+            //Cache dodat
+            Cache cache = new Cache(getCacheDir(), cacheSize);
+
+            OkHttpClient okHttpClient = new OkHttpClient()
+                    .newBuilder()
+                    .cache(cache)
+                    .addInterceptor(new Interceptor() {
+                @Override
+                public okhttp3.Response intercept(Chain chain)
+                        throws IOException {
+
+                    Request request = chain.request();
+                    if(!checkConectionAvalable()){
+                        int maxStale = 60*60*24*28; //tolerate 4 nedelje stale
+                        request = request
+                                .newBuilder()
+                                .header("Cache-Control", "public, only-if-cached, max-stale" + maxStale)
+                                .build();
+                    }
+
+
+                    return chain.proceed(request);
+                }
+            }).build();
+
+            Retrofit.Builder builder = new Retrofit.Builder()
+                    .baseUrl("http://api.themoviedb.org/3/")
+                    .client(okHttpClient)
+                    .addConverterFactory(GsonConverterFactory.create());
+
+            Retrofit retrofit = builder.build();
+            Service apiService= retrofit.create(Service.class);
+/*
+
             Client client = new Client();
             Service apiService = Client.getClient().create(Service.class);
+*/
 
             Call<MoviesResponse> call = apiService.getPupularMovies(BuildConfig.THE_MOVIE_DB_API_TOKEN);
             call.enqueue(new Callback<MoviesResponse>() {
@@ -122,7 +256,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     if (swipeContainer.isRefreshing()){
                         swipeContainer.setRefreshing(false);
                     }
-                    //pd.dismiss();
 
                 }
 
@@ -144,12 +277,46 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         try{
             if (BuildConfig.THE_MOVIE_DB_API_TOKEN.isEmpty()){
                 Toast.makeText(getApplicationContext(),"Nije ubacen API kljuc", Toast.LENGTH_LONG).show();
-                pd.dismiss();
                 return;
             }
 
+            //Cache dodat
+            Cache cache = new Cache(getCacheDir(), cacheSize);
+
+            OkHttpClient okHttpClient = new OkHttpClient()
+                    .newBuilder()
+                    .cache(cache)
+                    .addInterceptor(new Interceptor() {
+                        @Override
+                        public okhttp3.Response intercept(Chain chain)
+                                throws IOException {
+
+                            Request request = chain.request();
+                            if(!checkConectionAvalable()){
+                                int maxStale = 60*60*24*28; //tolerate 4 nedelje stale
+                                request = request
+                                        .newBuilder()
+                                        .header("Cache-Control", "public, only-if-cached, max-stale" + maxStale)
+                                        .build();
+                            }
+
+
+                            return chain.proceed(request);
+                        }
+                    }).build();
+
+            Retrofit.Builder builder = new Retrofit.Builder()
+                    .baseUrl("http://api.themoviedb.org/3/")
+                    .client(okHttpClient)
+                    .addConverterFactory(GsonConverterFactory.create());
+
+            Retrofit retrofit = builder.build();
+            Service apiService= retrofit.create(Service.class);
+
+/*
             Client client = new Client();
             Service apiService = Client.getClient().create(Service.class);
+*/
 
             Call<MoviesResponse> call = apiService.getTopRatedMovie(BuildConfig.THE_MOVIE_DB_API_TOKEN);
             call.enqueue(new Callback<MoviesResponse>() {
@@ -165,7 +332,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     if (swipeContainer.isRefreshing()){
                         swipeContainer.setRefreshing(false);
                     }
-                    //pd.dismiss();
 
                 }
 

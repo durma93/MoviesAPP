@@ -1,11 +1,12 @@
 package com.example.durma.moviesapp.model;
 
+import java.io.Serializable;
 import java.util.List;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 
-public class MoviesResponse {
+public class MoviesResponse implements Serializable {
 
     @SerializedName("page")
     @Expose

@@ -110,7 +110,7 @@ public class DetailActivity extends AppCompatActivity {
 
             ( (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar)).setTitle(movieName);
 
-/*            //Dodavanje da se gubi ime filma kad se skroluje
+          //Dodavanje da se gubi ime filma kad se skroluje
             AppBarLayout appBarLayout =(AppBarLayout) findViewById(R.id.appbar);
             appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
 
@@ -124,7 +124,7 @@ public class DetailActivity extends AppCompatActivity {
                         ((CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar)).setTitle("");
                     }
                 }
-            });*/
+            });
         }else{
             Toast.makeText(this, "Nema api podatka iz moviesAdaptera", Toast.LENGTH_LONG).show();
         }
